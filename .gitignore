@@ -1,0 +1,23 @@
+# 项目源文件
+
+
+# 编译输出文件
+dist
+package-lock.json
+sql.txt
+init.sql
+
+# Logs
+log/*
+
+# 依赖包
+node_modules/
+
+
+# 编辑器自动生成的文件
+.idea
+.vscode
+.tags
+.tags1
+.swp
+.DS_Store
