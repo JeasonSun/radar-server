@@ -2,6 +2,7 @@ import md5 from 'md5';
 import _ from 'lodash';
 import { getUnixTime } from 'date-fns';
 import Knex from '~/src/lib/mysql';
+import { customAlphabet } from 'nanoid';
 
 const MD5_SALT = '104734278123812323234';
 const DEFAULT_PASSWORD = 'radar@123';
@@ -11,6 +12,8 @@ const ROLE_ADMIN = 'admin';
 
 const REGISTER_TYPE_THIRD = 'third';
 const REGISTER_TYPE_SITE = 'site'; // 默认注册方式
+
+const nanoRule = customAlphabet('1234567890', 8);
 
 // TODO: 修改一下默认头像
 const DEFAULT_AVATAR_URL = 'http://ww1.sinaimg.cn/large/00749HCsly1fwofq2t1kaj30qn0qnaai.jpg';
@@ -67,14 +70,27 @@ function parseAccountToUcid(account) {
     return ucid
 }
 
-/** 
- * 创建用户
- * 
-*/
+async function createUcid(){
+    let nanoid = +('1' + nanoRule());// 固定1开头的数字
+    let existUserByUcid = await getByUcid(nanoid);
+    if (_.isEmpty(existUserByUcid) === false) { 
+       nanoid = await createUcid();
+    } else {
+        return nanoid;
+    }
+}
+
+/**
+ * @description 创建用户
+ * @param {*} account  账号
+ * @param {*} userInfo 用户信息
+ * @returns Boolean
+ */
 async function register(account, userInfo) {
     const tableName = getTableName();
-    // 没有ucid，则把account转化为ucid；
-    let parseAccount = parseAccountToUcid(account);
+    // 没有ucid，则把account转化为ucid；去除，改为使用nanoid生成ucid
+    // let parseAccount = parseAccountToUcid(account);
+    let parseAccount = await createUcid();
     let ucid = _.get(userInfo, ['ucid'], parseAccount);
     let email = _.get(userInfo, ['email'], '');
     let passwordMd5 = _.get(userInfo, ['password_md5'], hash(DEFAULT_PASSWORD));
@@ -89,6 +105,14 @@ async function register(account, userInfo) {
     if (ucid.length === 0 || account === '') {
         return false;
     }
+
+    // 检查account
+    // FIX:若用户已存在，不允许注册
+    let existUserByAccount = await getByAccount(account);
+    if (_.isEmpty(existUserByAccount) === false) { // 存在该账号
+        return false;
+    }
+    
     let nowAt = getUnixTime(new Date());
     let insertData = {
         ucid,
@@ -104,30 +128,6 @@ async function register(account, userInfo) {
         create_time: nowAt,
         update_time: nowAt
     }
-
-    // 检查account
-    // 若用户已存在就直接更新
-    let existUserByAccount = await getByAccount(account);
-    if (_.isEmpty(existUserByAccount) === false) { // 存在该账号
-        if (existUserByAccount.is_delete) { // 已经删除了,更新该账号；
-            let updateResult = await update(existUserByAccount.ucid, insertData);
-            return updateResult;
-        } else {
-            return true
-        }
-    }
-
-    // 检查ucid // TODO:为什么还要走一遍ucid的查询？
-    let existUserByUcid = await getByAccount(ucid)
-    if (_.isEmpty(existUserByUcid) === false) { // 改ucid已经存在
-        if (existUserByUcid.is_delete) {
-            let updateResult = await update(existUserByUcid.ucid, insertData)
-            return updateResult
-        } else {
-            return true
-        }
-    }
-
     let insertResult = await Knex
         .returning('id')
         .insert(insertData)
@@ -152,6 +152,17 @@ async function getByAccount(account) {
         .select(TABLE_COLUMN)
         .from(tableName)
         .where('account', account);
+
+    let user = _.get(result, [0], {});
+    return user;
+}
+async function getByUcid(ucid) {
+    const tableName = getTableName()
+
+    const result = await Knex
+        .select(TABLE_COLUMN)
+        .from(tableName)
+        .where('ucid', ucid);
 
     let user = _.get(result, [0], {});
     return user;
@@ -207,6 +218,35 @@ async function getSiteUserByAccount(account) {
     return user;
 }
 
+/**
+ * 检查用户身份是否是管理员
+ * @param {*} ucid
+ */
+async function isAdmin(ucid) {
+    let user = await get(ucid);
+    let isExist = _.get(user, ['is_delete'], 1) === 0;
+    let isAdmin = _.get(user, ['role'], ROLE_DEV) === ROLE_ADMIN;
+    if (isExist && isAdmin) {
+        return true
+    }
+    return false
+}
+
+/**
+ * 通过ucid获取用户信息
+ * @param {String} ucid
+ */
+async function get(ucid) {
+    const tableName = getTableName();
+
+    const result = await Knex
+        .select(TABLE_COLUMN)
+        .from(tableName)
+        .where('ucid', ucid);
+    let user = _.get(result, [0], {});
+    return user;
+}
+
 
 function formatRecord(rawItem) {
     let item = {};
@@ -223,5 +263,7 @@ export default {
     hash,
     getByAccount,
     formatRecord,
-    getSiteUserByAccount
+    getSiteUserByAccount,
+    get, // 通过ucid获取用户信息
+    isAdmin
 }

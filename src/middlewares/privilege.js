@@ -59,7 +59,11 @@ async function checkPrivilege(req, res, next) {
  * @param {*} res
  * @param {*} next
  */
+// TODO: 并不是所有有token，就算登录了
+// 在开发过程中，由于修改了一下token字段，但是token加密规则没有改变，所以还是能正常解析token，但是实际这个用户已经不存在了。
+// 暂时不解决，因为token理论上不会被伪造。
 function checkLogin(req, res, next) {
+    
     let ucid = _.get(req, ['radar', 'user', 'ucid'], 0)
     if (ucid === 0) {
         Logger.log('没有登录')

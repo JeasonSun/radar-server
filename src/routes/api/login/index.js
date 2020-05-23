@@ -7,6 +7,7 @@ import MUser from '~/src/model/project/user';
 import commonConfig from '~/src/configs/common';
 
 const LOGIN_TYPE = _.get(commonConfig, ['loginType'], 'normal');
+const LOGIN_MAX_AGE = 100 * 86400 * 1000; // 100day
 
 const login = RouterConfigBuilder.routerConfigBuilder('/api/login', RouterConfigBuilder.METHOD_TYPE_POST, async (req, res) => {
     switch (LOGIN_TYPE) {
@@ -66,10 +67,10 @@ const handleNormalLogin = async (req, res) => {
         let registerType = _.get(rawUser, ['register_type'], MUser.REGISTER_TYPE_SITE);
         let token = Auth.generateToken(ucid, account, nickname);
 
-        res.cookie('radar_token', token, { maxAge: 100 * 86400 * 1000, httpOnly: false });
-        res.cookie('ucid', ucid, { maxAge: 100 * 86400 * 1000, httpOnly: false });
-        res.cookie('nickname', nickname, { maxAge: 100 * 86400 * 1000, httpOnly: false });
-        res.cookie('account', account, { maxAge: 100 * 86400 * 1000, httpOnly: false });
+        res.cookie('radar_token', token, { maxAge: LOGIN_MAX_AGE, httpOnly: false });
+        res.cookie('ucid', ucid, { maxAge: LOGIN_MAX_AGE, httpOnly: false });
+        res.cookie('nickname', nickname, { maxAge: LOGIN_MAX_AGE, httpOnly: false });
+        res.cookie('account', account, { maxAge: LOGIN_MAX_AGE, httpOnly: false });
         res.send(API_RES.showResult({ ucid, nickname, account, avatarUrl, registerType }))
     }else {
         res.send(API_RES.showError('密码错误'), CODE.PASSWORD_ERROR);

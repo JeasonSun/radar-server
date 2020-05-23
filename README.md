@@ -22,8 +22,10 @@
 - [GET]/api/login/type 获取默认的用户登录方式
 
 #### Project路由
-##### Project.item
-- 
+##### Project.item 管理员权限
+- [POST]/api/project/item/add 添加项目
+- [POST]/api/project/item/update 更新项目信息
+
 
 
 ### Commander

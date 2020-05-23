@@ -14,7 +14,7 @@ import CODE from '~/src/constants/code';
 const register = RouterConfigBuilder.routerConfigBuilder('/api/user/register', RouterConfigBuilder.METHOD_TYPE_POST, async (req, res) => {
     const { body = {} } = req;
     const { account = '', password = '', nickname = '' } = body;
-    const email = account;
+    const email = ''; // FIX: 不需要让email默认就是account
     const registerType = MUser.REGISTER_TYPE_SITE;
     const role = MUser.ROLE_DEV;
     const passwordMd5 = MUser.hash(password);
