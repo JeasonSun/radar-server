@@ -13,8 +13,10 @@ import Logger from '~/src/lib/logger';
 import PrivilegeChecker from '~/src/middlewares/privilege';
 import router from '~/src/routes/index';
 
+let START_TIMES = 0;
 
 const startup = () => {
+    START_TIMES++;
     const app = express();
     // 设置存放模板引擎目录
     app.set('views', path.join(__dirname, '../public'));
@@ -60,6 +62,7 @@ const startup = () => {
     });
 
     app.listen(appConfig.port, function () {
+        
         Logger.log(`${appConfig.name} listening on port ${appConfig.port}`)
     });
 
@@ -72,5 +75,7 @@ process.on('uncaughtException', function (err) {
     // TODO: 服务器发送错误时报警并重启
     Logger.error(err + ':服务器重新启动，启动时间：' + (new Date()).toString())
     // Alert.sendMessage(WatchIdList.WATCH_UCID_LIST_DEFAULT, `[fee-rd]服务器重新启动, 原因: ${err}, 启动时间：${(new Date()).toString()}`)
-    startup(); 
+    if (START_TIMES < 3){
+        startup(); 
+    }
 })

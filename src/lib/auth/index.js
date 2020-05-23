@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import dateFns from 'date-fns';
+import { getUnixTime } from 'date-fns';
 import md5 from 'md5';
 import Logger from '~/src/lib/logger';
 
@@ -32,7 +32,7 @@ function parseToken(token) {
     try {
         info = JSON.parse(jsonInfo);
     } catch (e) {
-        Logger.log('token-Info信息不是标注json');
+        Logger.log('token-Info信息不是标准json');
         return {};
     }
 
@@ -57,7 +57,7 @@ function parseToken(token) {
 }
 
 function generateToken(ucid, account, nickname) {
-    let loginAt = dateFns.getUnixTime(new Date());
+    let loginAt = getUnixTime(new Date());
     let user = JSON.stringify({
         ucid,
         nickname,

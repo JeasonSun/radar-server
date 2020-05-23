@@ -1,5 +1,7 @@
 import _ from 'lodash';
-import Auth from '~/src/lib/auth'
+import Auth from '~/src/lib/auth';
+import API_RES from '~/src/constants/api_res';
+import Logger from '~/src/lib/logger';
 
 /**
  * 将用户信息更新到req对象中 req.radar req.user
@@ -26,7 +28,50 @@ function appendProjectInfo(req, res, next) {
     next();
 }
 
+
+
+/**
+ * 检查用户是否拥有该项目权限
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ */
+async function checkPrivilege(req, res, next) {
+    Logger.log('检测项目权限');
+
+    let ucid = _.get(req, ['radar', 'user', 'ucid'], 0)
+    let projectId = _.get(req, ['radar', 'project', 'projectId'], 0)
+    // 查询数据库
+    let hasPrivilege = await MProjectMember.hasPrivilege(projectId, ucid);
+
+    if (hasPrivilege === false) {
+        Logger.log('没有项目权限')
+        res.send(API_RES.noPrivilege())
+        return
+    }
+    next()
+}
+
+
+/**
+ * 检查用户是否已登录
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
+ */
+function checkLogin(req, res, next) {
+    let ucid = _.get(req, ['radar', 'user', 'ucid'], 0)
+    if (ucid === 0) {
+        Logger.log('没有登录')
+        res.send(API_RES.needLoginIn())
+        return
+    }
+    next()
+}
+
 export default {
     appendProjectInfo,
-    appendUserInfo
+    appendUserInfo,
+    checkPrivilege,
+    checkLogin
 }
