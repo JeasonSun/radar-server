@@ -37,7 +37,8 @@ export default {
     * 
     */
     PARAM_ERROR: 200000, //缺少参数response_type或response_type非法。
-    PARAM_CID: 200101, // 缺少参数client_id。
+    PARAM_MISS: 200100, // 缺少参数
+    PARAM_CID: 200101 //缺少参数client_id。
 
   
 
@@ -46,6 +47,7 @@ export default {
     * 
     */
     DATA_ERROR: 300000, // 数据错误
+    NO_DATA: 300001, //该记录不存在
 
 
 }

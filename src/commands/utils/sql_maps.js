@@ -1,23 +1,23 @@
 
 const SINGLE_T_O_USER = 't_o_user'; // 用户表
 const SINGLE_T_O_PROJECT = 't_o_project'; //项目表
-
+const SINGLE_T_O_PROJECT_MEMBER = 't_o_project_member' // 项目成员表
 const SINGLE_TABLE_ARRAY = [
-    SINGLE_T_O_PROJECT,
-    // SINGLE_T_R_BEHAVIOR_DISTRIBUTION,
-    // SINGLE_T_R_DURATION_DISTRIBUTION,
-    // SINGLE_T_R_HTTP_ERROR_DISTRIBUTION,
-    // SINGLE_T_R_PAGE_VIEW,
-    // SINGLE_T_R_SYSTEM_BROWSER,
-    // SINGLE_T_R_SYSTEM_RUNTIME_VERSION,
-    // SINGLE_T_R_SYSTEM_DEVICE,
-    // SINGLE_T_R_SYSTEM_OS,
-    // SINGLE_T_R_UNIQUE_VIEW,
-    // SINGLE_T_O_ALARM_CONFIG,
-    SINGLE_T_O_USER,
-    // SINGLE_T_O_PROJECT_MEMBER,
-    // SINGLE_T_O_NEW_USER_SUMMARY,
-    // SINGLE_T_R_ALARM_LOG
+  SINGLE_T_O_PROJECT,
+  // SINGLE_T_R_BEHAVIOR_DISTRIBUTION,
+  // SINGLE_T_R_DURATION_DISTRIBUTION,
+  // SINGLE_T_R_HTTP_ERROR_DISTRIBUTION,
+  // SINGLE_T_R_PAGE_VIEW,
+  // SINGLE_T_R_SYSTEM_BROWSER,
+  // SINGLE_T_R_SYSTEM_RUNTIME_VERSION,
+  // SINGLE_T_R_SYSTEM_DEVICE,
+  // SINGLE_T_R_SYSTEM_OS,
+  // SINGLE_T_R_UNIQUE_VIEW,
+  // SINGLE_T_O_ALARM_CONFIG,
+  SINGLE_T_O_USER,
+  SINGLE_T_O_PROJECT_MEMBER,
+  // SINGLE_T_O_NEW_USER_SUMMARY,
+  // SINGLE_T_R_ALARM_LOG
 ];
 
 // 需要分表；
@@ -39,14 +39,14 @@ const MULTI_T_O_USER_FIRST_LOGIN_AT = 't_o_user_first_login_at';
 const MULTI_T_R_ERROR_SUMMARY = 't_r_error_summary';
 
 const MULTI_TABLE_ARRAY = [
-    // MULTI_T_O_MONITOR,
-    // MULTI_T_O_MONITOR_EXT,
-    // MULTI_T_O_UV_RECORD,
-    // MULTI_T_R_CITY_DISTRIBUTION,
-    // MULTI_T_R_PERFORMANCE,
-    // MULTI_T_O_SYSTEM_COLLECTION,
-    // MULTI_T_O_USER_FIRST_LOGIN_AT,
-    // MULTI_T_R_ERROR_SUMMARY
+  // MULTI_T_O_MONITOR,
+  // MULTI_T_O_MONITOR_EXT,
+  // MULTI_T_O_UV_RECORD,
+  // MULTI_T_R_CITY_DISTRIBUTION,
+  // MULTI_T_R_PERFORMANCE,
+  // MULTI_T_O_SYSTEM_COLLECTION,
+  // MULTI_T_O_USER_FIRST_LOGIN_AT,
+  // MULTI_T_R_ERROR_SUMMARY
 ];
 
 /**************  表模板 ********************/
@@ -87,6 +87,21 @@ TABLE_TEMPLATE[SINGLE_T_O_PROJECT] = `(
   UNIQUE KEY \`uniq_project_name\` (\`project_name\`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='项目表';`
 
+TABLE_TEMPLATE[SINGLE_T_O_PROJECT_MEMBER] = `(
+    \`id\` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+    \`project_id\` bigint(20) unsigned NOT NULL DEFAULT '0' COMMENT '项目id',
+    \`ucid\` varchar(20) NOT NULL DEFAULT '' COMMENT '项目参与者ucid',
+    \`role\` varchar(20) NOT NULL DEFAULT '' COMMENT '参与者角色(owner => 组长, dev => 成员)',
+    \`need_alarm\` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT '是否需要报警(0 => 不需要, 1 => 需要)',
+    \`is_delete\` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT '是否已删除(0 => 未删除, 1 => 已删除)',
+    \`create_ucid\` varchar(20) NOT NULL DEFAULT '' COMMENT '创建者ucid',
+    \`update_ucid\` varchar(20) NOT NULL DEFAULT '' COMMENT '更新者ucid',
+    \`create_time\` bigint(20) unsigned NOT NULL DEFAULT '0' COMMENT '创建此记录的时间',
+    \`update_time\` bigint(20) unsigned NOT NULL DEFAULT '0' COMMENT '更新此记录的时间',
+    PRIMARY KEY (\`id\`)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='项目成员表';
+`
+
 TABLE_TEMPLATE[MULTI_T_O_MONITOR] = ``;
 TABLE_TEMPLATE[MULTI_T_O_MONITOR_EXT] = ``;
 TABLE_TEMPLATE[MULTI_T_O_UV_RECORD] = ``;
@@ -97,12 +112,12 @@ TABLE_TEMPLATE[MULTI_T_O_USER_FIRST_LOGIN_AT] = ``;
 TABLE_TEMPLATE[MULTI_T_R_ERROR_SUMMARY] = ``;
 
 export {
-    // 所有表的模板
-    TABLE_TEMPLATE,
-    // 单表List
-    SINGLE_TABLE_ARRAY,
-    SINGLE_T_O_USER,
+  // 所有表的模板
+  TABLE_TEMPLATE,
+  // 单表List
+  SINGLE_TABLE_ARRAY,
 
-    // 多表List
-    MULTI_TABLE_ARRAY
+
+  // 多表List
+  MULTI_TABLE_ARRAY
 }

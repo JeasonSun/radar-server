@@ -57,7 +57,7 @@ for (let url of Object.keys(routerConfigMap)) {
         loginRouter.use(url, PrivilegeChecker.checkLogin);
         if (routerConfig.needProjectId) {
             // 需要校验项目权限
-            loginProjectRouter.use(url, PrivilegeChecker.checkPrivilege)
+            loginProjectRouter.use(url, PrivilegeChecker.checkPrivilege);
             Logger.log(`需要登录,也需要检验项目权限(Method: ${routerConfig.methodType}) =>`, url);
             registerRouterByMethod(loginProjectRouter, routerConfig, url)
         } else {

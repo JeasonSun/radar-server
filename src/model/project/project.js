@@ -97,7 +97,7 @@ async function get(id) {
     let result = await Knex
         .select(TABLE_COLUMN)
         .from(tableName)
-        .where('id', '=', id)
+        .where('id',id)
         .catch(err => {
             Logger.log(err.message, 'project_item    get   出错')
             return []

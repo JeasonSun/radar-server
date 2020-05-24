@@ -2,7 +2,7 @@ import Base from '~/src/commands/base';
 import moment from 'moment';
 import _ from 'lodash';
 import DATE_FORMAT from '~/src/constants/date_format';
-import { TABLE_TEMPLATE, SINGLE_TABLE_ARRAY, MULTI_TABLE_ARRAY, SINGLE_T_O_USER} from '~/src/commands/utils/sql_maps';
+import { TABLE_TEMPLATE, SINGLE_TABLE_ARRAY, MULTI_TABLE_ARRAY} from '~/src/commands/utils/sql_maps';
 
 const SQL_DATE_FORMAT_YM = 'YYYYMM';
 

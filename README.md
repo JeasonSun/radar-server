@@ -25,6 +25,16 @@
 ##### Project.item 管理员权限
 - [POST]/api/project/item/add 添加项目
 - [POST]/api/project/item/update 更新项目信息
+- [POST]/api/project/item/delete 根据ID删除项目（逻辑删除，update is_delete:1）
+- [GET]/api/project/item/detail 查看项目详情
+- [GET]/api/project/item/list 获取项目列表
+
+##### Project.member 
+- [POST]/project/:id/api/project/member/add 给项目中添加成员
+- [POST]/project/:id/api/project/member/update (role,alarm）
+
+
+
 
 
 

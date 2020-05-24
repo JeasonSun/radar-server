@@ -2,6 +2,7 @@ import _ from 'lodash';
 import Auth from '~/src/lib/auth';
 import API_RES from '~/src/constants/api_res';
 import Logger from '~/src/lib/logger';
+import MProjectMember from '~/src/model/project/project_member';
 
 /**
  * 将用户信息更新到req对象中 req.radar req.user
@@ -63,7 +64,7 @@ async function checkPrivilege(req, res, next) {
 // 在开发过程中，由于修改了一下token字段，但是token加密规则没有改变，所以还是能正常解析token，但是实际这个用户已经不存在了。
 // 暂时不解决，因为token理论上不会被伪造。
 function checkLogin(req, res, next) {
-    
+    Logger.log('检测是否已经登录');
     let ucid = _.get(req, ['radar', 'user', 'ucid'], 0)
     if (ucid === 0) {
         Logger.log('没有登录')
