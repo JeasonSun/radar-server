@@ -73,7 +73,7 @@ const handleNormalLogin = async (req, res) => {
         res.cookie('account', account, { maxAge: LOGIN_MAX_AGE, httpOnly: false });
         res.send(API_RES.showResult({ ucid, nickname, account, avatarUrl, registerType }))
     }else {
-        res.send(API_RES.showError('密码错误'), CODE.PASSWORD_ERROR);
+        res.send(API_RES.showError('密码错误', CODE.PASSWORD_ERROR));
     }
 }
 

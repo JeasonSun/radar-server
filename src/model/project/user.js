@@ -16,7 +16,7 @@ const REGISTER_TYPE_SITE = 'site'; // 默认注册方式
 const nanoRule = customAlphabet('1234567890', 8);
 
 // TODO: 修改一下默认头像
-const DEFAULT_AVATAR_URL = 'http://ww1.sinaimg.cn/large/00749HCsly1fwofq2t1kaj30qn0qnaai.jpg';
+const DEFAULT_AVATAR_URL = '';
 
 const BASE_TABLE_NAME = 't_o_user';
 const TABLE_COLUMN = [

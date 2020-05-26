@@ -4,7 +4,7 @@ import env from '~/src/configs/env';
 
 const production = {
     name: 'Radar监控平台开发环境',
-    port: 3000,
+    port: 3080,
     proxy: false,
     absoluteLogPath: path.resolve(__dirname, '../../', 'log')
 }
@@ -15,14 +15,14 @@ const production = {
 // 开发环境配置
 const development = {
     name: 'Radar监控平台开发环境',
-    port: 3000,
+    port: 3080,
     proxy: false,
     absoluteLogPath: path.resolve(__dirname, '../../', 'log')
 }
 // 测试环境配置
 const testing = {
     name: 'Radar监控平台开发环境',
-    port: 3000,
+    port: 3080,
     proxy: false,
     absoluteLogPath: path.resolve(__dirname, '../../', 'log')
 }

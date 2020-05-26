@@ -117,6 +117,12 @@ const detail = RouterConfigBuilder.routerConfigBuilder('/api/project/item/detail
             res.send(API_RES.showError(`项目id:${id}已删除`, CODE.NO_DATA));
         } else {
             project = MProject.formatRecord(project);
+            let projectId = project['id'];
+            let membersInfo = await MProjectMember.getProjectMemberInfo(projectId);
+            project = {
+                ...project,
+                ...membersInfo
+            }
             res.send(API_RES.showResult(project))
         }
     }
@@ -133,8 +139,11 @@ const list = RouterConfigBuilder.routerConfigBuilder('/api/project/item/list', R
         let projectList = []
         for (let rawProject of rawProjectList) {
             let project = MProject.formatRecord(rawProject);
+            let projectId = project['id'];
+            let membersInfo = await MProjectMember.getProjectMemberInfo(projectId);
             project = {
                 ...project,
+                ...membersInfo,
                 role: MProjectMember.ROLE_OWNER,
                 need_alarm: 0
             }
@@ -162,8 +171,10 @@ const list = RouterConfigBuilder.routerConfigBuilder('/api/project/item/list', R
     for(let rawProject of rawProjectList){
         let project = MProject.formatRecord(rawProject);
         const projectId = project['id'];
+        let membersInfo = await MProjectMember.getProjectMemberInfo(projectId);
         project = {
             ...project,
+            ...membersInfo,
             role: _.get(projectMap, [projectId, 'role'], MProjectMember.ROLE_DEV),
             need_alarm: _.get(projectMap, [projectId, 'need_alarm'], 0)
         };

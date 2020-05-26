@@ -17,15 +17,25 @@ import Logger from '~/src/lib/logger';
 */
 const add = RouterConfigBuilder.routerConfigBuilder('/api/project/member/add', RouterConfigBuilder.METHOD_TYPE_POST, async (req, res) => {
     let body = _.get(req, ['body'], {});
-    // 支持按照ucid List添加；
+    let addType = _.get(body, ['type'], 0); // 默认： 0 ucid, 1:account;
     let ucidList = _.get(body, ['ucid_list']);
-    if (_.isEmpty(ucidList)) {
-        return res.send(API_RES.showError('缺少参数ucid_list', CODE.PARAM_MISS));
+    let accountList = _.get(body, ['account_list']);
+    if(addType == 1){ // 按照account来查询；
+        if (_.isEmpty(accountList)) {
+            return res.send(API_RES.showError('type=1时，缺少参数account_list', CODE.PARAM_MISS));
+        } else {
+            accountList = accountList.split(',');
+        }
+    } else {
+        if (_.isEmpty(ucidList)) {
+            return res.send(API_RES.showError('缺少参数ucid_list', CODE.PARAM_MISS));
+        } else {
+            ucidList = ucidList.split(',');
+        }
     }
-    ucidList = ucidList.split(',');
+
     let role = _.get(body, ['role'], MProjectMember.ROLE_DEV);
     let needAlarm = parseInt(_.get(body, ['need_alarm'], 0));
-    // let bodyProjectId = parseInt(_.get(body, ['project_id'], 0));
     let createUcid = _.get(req, ['radar', 'user', 'ucid'], '0');
     let projectId = _.get(req, ['radar', 'project', 'projectId'], 0);
     let updateUcid = createUcid;
@@ -39,33 +49,40 @@ const add = RouterConfigBuilder.routerConfigBuilder('/api/project/member/add', R
         return res.send(API_RES.noPrivilege('只有组长和管理员才可以调整成员'));
     }
 
-    if (_.isEmpty(ucidList)) {
-        return res.send(API_RES.showResult([], '添加完毕'));
-    }
+    // if (_.isEmpty(ucidList)) {
+    //     return res.send(API_RES.showResult([], '添加完毕'));
+    // }
 
     let anyOneSuccess = false;
     let successArray = [];
-
-    for (let ucid of ucidList) {
-        ucid = parseInt(ucid);
-        if (_.isInteger(ucid) === false || ucid <= 0) {
-            // ucid 不合法，跳出
-            continue;
-        }
+    let errorArray = [];
+    let accounts = [];
+    if(addType == 1){
+        accounts = accountList;
+    } else {
+        accounts = ucidList;
+    }
+    for (let account of accounts) {    
         // 检查user里是否有ucid对应的记录
-        const rawUser = await MUser.get(ucid);
+        let rawUser = null;
+        if (addType == 1){
+            rawUser = await MUser.getByAccount(account);
+        } else {
+            rawUser = await MUser.get(account);
+        }
+
         if (_.isEmpty(rawUser) || rawUser.is_delete === 1) {
             // TODO: 用户不存在，应该直接创建用户，并且添加。先略过，保证用户只能先创建，再申请添加。
             // fee中会在UC中创建用户。暂时不考虑UC
+            errorArray.push(account);
             continue;
         }
-
+        let ucid = rawUser.ucid;
         // 检查数据库中，该项目是否存在此ucid，一个人在数据库中不能添加两次。
         let record = await MProjectMember.getByProjectIdAndUcid(projectId, ucid);
 
         // 不在数据库中，直接添加到列表中
         if (_.isEmpty(record)) {
-            console.log('不在数据库中', record)
             let insertData = {
                 ucid,
                 project_id: projectId,
@@ -76,7 +93,9 @@ const add = RouterConfigBuilder.routerConfigBuilder('/api/project/member/add', R
             }
             let isSuccess = await MProjectMember.add(insertData);
             if (isSuccess) {
-                successArray.push(ucid);
+                successArray.push(account);
+            } else {
+                errorArray.push(account);
             }
             anyOneSuccess = anyOneSuccess || isSuccess;
             continue;
@@ -86,6 +105,7 @@ const add = RouterConfigBuilder.routerConfigBuilder('/api/project/member/add', R
         const { id, is_delete: isDelete } = record;
         if (isDelete === 0) {
             //已经有数据了，而且没有删除
+            errorArray.push(account);
             continue;
         }
         // 已经有数据了， 但是被删除了，那就还原。
@@ -97,7 +117,9 @@ const add = RouterConfigBuilder.routerConfigBuilder('/api/project/member/add', R
         }
         let isSuccess = await MProjectMember.update(id, updateData);
         if (isSuccess) {
-            successArray.push(ucid);
+            successArray.push(account);
+        } else {
+            errorArray.push(account);
         }
         anyOneSuccess = anyOneSuccess || isSuccess;
     }
@@ -105,7 +127,7 @@ const add = RouterConfigBuilder.routerConfigBuilder('/api/project/member/add', R
     if (anyOneSuccess) {
         res.send(API_RES.showResult(successArray, '添加完毕'));
     } else {
-        res.send(API_RES.showError([], '添加失败，请重试'))
+        res.send(API_RES.showError(`添加失败,${errorArray}`))
     }
 })
 

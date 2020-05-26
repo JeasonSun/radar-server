@@ -234,6 +234,55 @@ async function hasPrivilege(projectId, ucid) {
     return isExist;
 }
 
+/**
+ * 根据项目id获取这个项目下所有用户列表
+ * @param {*} projectId
+ */
+async function getProjectMemberList(projectId) {
+    const tableName = getTableName()
+    const result = await Knex
+        .select(TABLE_COLUMN)
+        .from(tableName)
+        .where('project_id', projectId)
+        .andWhere('is_delete', 0)
+        .catch(err => {
+            Logger.log(err.message, 'project_member    getMemberIdList   出错')
+            return []
+        })
+    return result;
+}
+/**
+ * 获取某个项目的成员信息
+ * @param {*} projectId
+ * @returns 
+ */
+async function getProjectMemberInfo(projectId){
+    const tableName = getTableName()
+    const result = await Knex
+        .select(TABLE_COLUMN)
+        .from(tableName)
+        .where('project_id', projectId)
+        .andWhere('is_delete', 0)
+        .catch(err => {
+            Logger.log(err.message, 'project_member    getMemberIdList   出错')
+            return []
+        })
+    const count = result.length;
+    let owners = [];
+    let members = [];
+    result.forEach((member) => {
+        if (member.role == ROLE_OWNER){
+            owners.push(formatRecord(member));
+        }
+        members.push(formatRecord(member));
+    });
+    return {
+        count,
+        members,
+        owners
+    }
+}
+
 export default {
     ROLE_DEV,
     ROLE_OWNER,
@@ -244,6 +293,8 @@ export default {
     update,
 
     getProjectMemberListByUcid,
+    getProjectMemberList,
+    getProjectMemberInfo,
 
     isProjectOwner,
     getByProjectIdAndUcid,
