@@ -44,6 +44,8 @@
 - [TODO][GET]/project/:id/api/project/member/delete 删除项目中成员
 
 
+### 错误日志
+- [GET]/project/:id/api/error/distribution/url URL
 
 
 
@@ -53,3 +55,11 @@
 > 在radar.js中通过`@adonisjs/ace`注册了各种命令，主要命令如下：
 #### 工具类命令
 - Utils:GenerateSQL 数据库建表
+
+
+### 任务执行周期
+    1. 每分钟一次（准实时）
+        1. 原始数据入库
+            1. 错误数据入库
+        2. 按分钟统计
+            1. 错误数据统计
