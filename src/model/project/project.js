@@ -15,7 +15,8 @@ const TABLE_COLUMN = [
     `create_ucid`,
     `update_time`,
     `update_ucid`,
-    `is_delete` 
+    `is_delete`,
+    `log_img` 
 ];
 const DISPLAY_TABLE_COLUMN = [
     `id`,
@@ -26,7 +27,8 @@ const DISPLAY_TABLE_COLUMN = [
     `create_time`,
     `create_ucid`,
     `update_time`,
-    `update_ucid`
+    `update_ucid`,
+    `log_img`
 ]
 
 function getTableName() {

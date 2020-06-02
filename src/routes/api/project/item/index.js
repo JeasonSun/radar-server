@@ -4,7 +4,7 @@ import API_RES from '~/src/constants/api_res';
 import CODE from '~/src/constants/code';
 import MUser from '~/src/model/project/user';
 import MProject from "~/src/model/project/project";
-import Util from '~/src/lib/utils/util';
+import Util from '~/src/lib/utils/modules/util';
 import MProjectMember from '~/src/model/project/project_member';
 
 const add = RouterConfigBuilder.routerConfigBuilder('/api/project/item/add', RouterConfigBuilder.METHOD_TYPE_POST, async (req, res) => {
