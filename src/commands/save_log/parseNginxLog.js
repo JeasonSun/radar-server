@@ -19,7 +19,8 @@ class NginxParseLog extends SaveLogBase {
     static get signature() {
         return `
      SaveLog:Nginx 
-     {date?: [String]可以读取指定日期的日志}
+     {id: [Number] 读取日志的服务器ID}
+     {date: [String]可以读取指定日期的日志YYYY-MM-DD}
      `
     }
 
@@ -31,6 +32,7 @@ class NginxParseLog extends SaveLogBase {
     async execute(args, options) {
         console.log(args, options)
         let formatStr = args.date;
+        let serverId = args.id;
         let that = this;
 
         // 获取项目列表
@@ -38,17 +40,11 @@ class NginxParseLog extends SaveLogBase {
 
         let logCounter = 0;
         let legalLogCounter = 0;
+        // 文件地址, 2019-10-15中15指的是一台机器地址。
         let nginxLogFilePath = commonConfig.nginxLogFilePath;
-
-        let timeAt = moment().unix() - 60;
-        let timeMoment = moment.unix(timeAt);
-        if (!formatStr) {
-            formatStr = timeMoment.format('YYYY-MM-DD');
-        }
-
-
-        // TODO: 文件地址，开始时这样处理。 2019-10-15中15指的是一台机器地址。
-        let logAbsolutePath = `${nginxLogFilePath}/localhost_access.2019-10-15/localhost_access_log.${formatStr}.txt`;
+        let month = moment(formatStr).format('YYYY-MM');
+        let directoryPath = `${month}-${serverId}`;
+        let logAbsolutePath = `${nginxLogFilePath}/localhost_access.${directoryPath}/localhost_access_log.${formatStr}.txt`;
 
         if (fs.existsSync(logAbsolutePath) === false) {
             that.log(`log文件不存在，自动跳过 => ${logAbsolutePath}`);
@@ -83,7 +79,7 @@ class NginxParseLog extends SaveLogBase {
                 // 存原始数据 
                 let rawLogWriteStreamByLogCreateAt = this.getWriteStreamClientByType(logCreateAt, LKafka.LOG_TYPE_RAW);
                 rawLogWriteStreamByLogCreateAt.write(content);
-                this.log(`收到数据, 当前共记录${legalLogCounter}/${logCounter}条数据`)
+                // this.log(`收到数据, 当前共记录${legalLogCounter}/${logCounter}条数据`)
 
                 // 存一下解析完成的JSON数据；
                 let jsonWriteStreamByLogCreateAt = this.getWriteStreamClientByType(logCreateAt, LKafka.LOG_TYPE_JSON);
@@ -94,7 +90,7 @@ class NginxParseLog extends SaveLogBase {
                     // 每当句柄池满100后, 关闭除距离当前时间10分钟之内的所有文件流
                     this.autoCloseOldStream()
                 }
-      
+
                 next();
             }
 
@@ -112,7 +108,7 @@ class NginxParseLog extends SaveLogBase {
             }).go(onDataIn, onReadFinish)
         });
 
-        that.log(`共收到${logCounter}条数据, 匹配处理${legalLogCounter}条数据`);
+        that.log(`${directoryPath}/${formatStr}:共收到${logCounter}条数据, 匹配处理${legalLogCounter}条数据`);
     }
 
     async save2DB(data) {

@@ -147,7 +147,7 @@ class SaveLogBase extends Base {
                 survivalSet.add(survivalAtRawLogUri)
             }
         }
-        console.log([...survivalSet]);
+        
         let needCloseLogUriSet = new Set();
         // 获得所有过期uri key
         for (let testLogFileUri of jsonWriteStreamPool.keys()) {
