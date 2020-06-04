@@ -54,12 +54,23 @@
 ### Commander
 > 在radar.js中通过`@adonisjs/ace`注册了各种命令，主要命令如下：
 #### 工具类命令
-- Utils:GenerateSQL 数据库建表
+- Utils:GenerateSQL 数据库建表 // TIP:难道库表的生成都是自己手动生成的？ mysql -uroot -proot databaseName< c:\init.sql
+
 
 
 ### 任务执行周期
-    1. 每分钟一次（准实时）
+    1. 每分钟一次（准实时）(实际按照每天处理)；
         1. 原始数据入库
             1. 错误数据入库
         2. 按分钟统计
             1. 错误数据统计
+### 执行流程
+    1. 定时读取nginx日志，过滤解析出符合要求的nginx日志，分别存储在json/raw下面，等待进一步的分析归类。
+    2. 错误数据入库  目前log中的错误日志没有stack,应该改进
+
+// TODO: 分析日志后写入日志，似乎目前有句柄关闭的时机不正确，导致写入没有正确结束。
+
+    
+
+
+[教师空间打点行为](http://wiki.okjiaoyu.cn/pages/viewpage.action?pageId=24647399)

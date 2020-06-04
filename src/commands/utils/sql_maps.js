@@ -39,8 +39,8 @@ const MULTI_T_O_USER_FIRST_LOGIN_AT = 't_o_user_first_login_at';
 const MULTI_T_R_ERROR_SUMMARY = 't_r_error_summary';
 
 const MULTI_TABLE_ARRAY = [
-  // MULTI_T_O_MONITOR,
-  // MULTI_T_O_MONITOR_EXT,
+  MULTI_T_O_MONITOR,
+  MULTI_T_O_MONITOR_EXT,
   // MULTI_T_O_UV_RECORD,
   // MULTI_T_R_CITY_DISTRIBUTION,
   // MULTI_T_R_PERFORMANCE,
@@ -102,8 +102,36 @@ TABLE_TEMPLATE[SINGLE_T_O_PROJECT_MEMBER] = `(
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='项目成员表';
 `
 
-TABLE_TEMPLATE[MULTI_T_O_MONITOR] = ``;
-TABLE_TEMPLATE[MULTI_T_O_MONITOR_EXT] = ``;
+TABLE_TEMPLATE[MULTI_T_O_MONITOR] = `(
+  \`id\` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '记录id',
+  \`error_type\` varchar(20) NOT NULL DEFAULT '' COMMENT '异常类型(目前是四种,分别对应前端的四种报错类型: api_data =>前端数据结构报警, start_process => 启动过程异常, load_wv => Url加载空服务报警, api_code => 请求接口异常报警)',
+  \`error_name\` varchar(255) NOT NULL DEFAULT '' COMMENT '错误名/错误代码,用于细分错误类别',
+  \`http_code\` int(10) NOT NULL DEFAULT '0' COMMENT 'http状态码, 没有则为0',
+  \`monitor_ext_id\` bigint(20) NOT NULL DEFAULT '0' COMMENT '详情id',
+  \`during_ms\` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '接口请求时长, 单位毫秒',
+  \`request_size_b\` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '接口请求体积, 单位b',
+  \`response_size_b\` int(10) unsigned NOT NULL DEFAULT '0' COMMENT '接口响应体积, 单位b',
+  \`url\` varchar(255) NOT NULL DEFAULT '' COMMENT '发生异常的url',
+  \`country\` varchar(10) NOT NULL DEFAULT '' COMMENT '所属国家',
+  \`province\` varchar(15) NOT NULL DEFAULT '' COMMENT '所属省份',
+  \`city\` varchar(15) NOT NULL DEFAULT '' COMMENT '所属城市',
+  \`log_at\` bigint(20) NOT NULL DEFAULT '0' COMMENT '日志记录时间',
+  \`md5\` char(32) NOT NULL DEFAULT '' COMMENT '记录生成MD5',
+  \`create_time\` bigint(20) NOT NULL DEFAULT '0' COMMENT '数据库创建时间',
+  \`update_time\` bigint(20) NOT NULL DEFAULT '0' COMMENT '数据库更新时间',
+  PRIMARY KEY (\`id\`),
+  UNIQUE KEY \`uniq_log_at_md5\` (\`log_at\`,\`md5\`),
+  KEY \`idx_log_at_error_type_error_name_url\` (\`log_at\`,\`error_type\`,\`error_name\`,\`url\`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='异常数据表, 按项目按月分表, 只有最基础的错误信息, ext字段需要到详情表中单独获取, 命名规则: t_o_monitor_项目id_YYYYMM';
+`;
+TABLE_TEMPLATE[MULTI_T_O_MONITOR_EXT] = `(
+  \`id\` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '记录id',
+  \`ext_json\` text COMMENT '异常记录扩展信息',
+  \`create_time\` bigint(20) NOT NULL DEFAULT '0' COMMENT '数据库创建时间',
+  \`update_time\` bigint(20) NOT NULL DEFAULT '0' COMMENT '数据库更新时间',
+  PRIMARY KEY (\`id\`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='异常数据的ext信息, 按项目按月分表, 命名规则: t_o_monitor_ext_项目id_YYYYMM';
+`;
 TABLE_TEMPLATE[MULTI_T_O_UV_RECORD] = ``;
 TABLE_TEMPLATE[MULTI_T_R_CITY_DISTRIBUTION] = ``;
 TABLE_TEMPLATE[MULTI_T_R_PERFORMANCE] = ``;
@@ -119,5 +147,7 @@ export {
 
 
   // 多表List
-  MULTI_TABLE_ARRAY
+  MULTI_TABLE_ARRAY,
+  MULTI_T_O_MONITOR,
+  MULTI_T_O_MONITOR_EXT,
 }

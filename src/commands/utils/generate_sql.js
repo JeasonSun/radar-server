@@ -2,7 +2,7 @@ import Base from '~/src/commands/base';
 import moment from 'moment';
 import _ from 'lodash';
 import DATE_FORMAT from '~/src/constants/date_format';
-import { TABLE_TEMPLATE, SINGLE_TABLE_ARRAY, MULTI_TABLE_ARRAY} from '~/src/commands/utils/sql_maps';
+import { TABLE_TEMPLATE, SINGLE_TABLE_ARRAY, MULTI_TABLE_ARRAY, MULTI_T_O_MONITOR, MULTI_T_O_MONITOR_EXT} from '~/src/commands/utils/sql_maps';
 
 const SQL_DATE_FORMAT_YM = 'YYYYMM';
 
@@ -13,7 +13,14 @@ function generate(baseTableName, projectId = '', tableTime = '') {
     // 生成表名
     let finalTableName = `${baseTableName}`;
     // 需要分表时候，按照规则创建表名；
+
     switch (baseTableName) {
+        case MULTI_T_O_MONITOR:
+            finalTableName = `${finalTableName}_${projectId}_${tableTime}`
+            break;
+        case MULTI_T_O_MONITOR_EXT:
+            finalTableName = `${finalTableName}_${projectId}_${tableTime}`;
+            break;
         default:
             break;
     }

@@ -57,7 +57,7 @@ class NginxParseLog extends SaveLogBase {
                 logCounter++;
                 let content = data.toString();
 
-                // 首先判断是不是测试数据，如果是测试数据，直接保存，跳过后续所有逻辑；// TODO:
+                //TODO: 首先判断是不是测试数据，如果是测试数据，直接保存，跳过后续所有逻辑；
 
                 // 检查日志格式，只录入解析后，符合规则的log
                 let parseResult = await that.parseLog(content, projectMap);
@@ -66,7 +66,7 @@ class NginxParseLog extends SaveLogBase {
                     return next();
                 }
 
-                // 获取日志时间，没有原始日志时间则直接跳过 // TODO:
+                // TODO:获取日志时间，没有原始日志时间则直接跳过
                 let logCreateAt = this.parseLogCreateAt(content);
 
                 // that.log('日志内容 => ', logCreateAt, parseResult);

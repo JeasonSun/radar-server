@@ -11,7 +11,8 @@ const registeredCommandList = [
     './commands/task/manage',  // 任务调度
 
     // 解析日志
-    './commands/parse/base', // 测试解析日志  // kafka
+    // './commands/parse/base', // 测试解析日志  // kafka
+    './commands/parse/monitor', //  解析错误报警 kafka
     
     './commands/save_log/parseNginxLog', // 将ngnix日志落在文件中
 

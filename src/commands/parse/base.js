@@ -4,6 +4,9 @@ import DATE_FORMAT from '~/src/constants/date_format';
 import Alert from '~/src/lib/utils/modules/alert';
 import AlarmConfig from '~/src/configs/alarm';
 import moment from 'moment';
+import LKafka from '~/src/lib/kafka';
+import fs from 'fs';
+import { readLine } from 'lei-stream';
 
 class ParseBase extends Base {
 
@@ -37,49 +40,68 @@ class ParseBase extends Base {
         let { startAtYmdHi, endAtYmdHi } = args;
         if (this.isArgumentsLegal(args, options) === false) {
             this.warn('参数不正确，自动退出');
-            Alert.sendMessage(AlarmConfig.WATCH_UCID_LIST_DEFAULT, `${this.constructor.name}参数不正确, 自动退出`);
+            Alert.sendMessage(AlarmConfig.WATCH_UCID_LIST_DEFAULT, `${this.constructor.name}参数不正确，自动退出`);
             return false;
         }
-
         this.startAtMoment = moment(startAtYmdHi, this.DATE_FORMAT_ARGUMENTS);
         this.endAtMoment = moment(endAtYmdHi, this.DATE_FORMAT_ARGUMENTS);
         this.log(`开始分析${this.startAtMoment.format(this.DATE_FORMAT_DISPLAY) + ':00'}~${this.endAtMoment.format(this.DATE_FORMAT_DISPLAY) + ':59'}范围内的记录`);
         let startAt = this.startAtMoment.unix();
         let endAt = this.endAtMoment.unix();
+        // TIP: 这边把所有数据存在projectMap中，是不是会导致内存占用过高？ 由于fee中是每分钟处理一次，所以，可能还能确保projectMap占用不多，但是如果radar按照1day的时间来处理，应该会出问题。
         await this.parseLog(startAt, endAt);
-        // this.log('全部数据处理完毕, 存入数据库中');
-        // let { totalRecordCount, processRecordCount, successSaveCount } = await this.save2DB();
-        // this.log(`${this.startAtMoment.format(this.DATE_FORMAT_DISPLAY) + ':00'}~${this.endAtMoment.format(this.DATE_FORMAT_DISPLAY) + ':59'}范围内日志录入完毕, 共记录数据${processRecordCount}/${totalRecordCount}条, 入库成功${successSaveCount}条`);
+        this.log('全部数据处理完毕，存入数据库中');
+        console.log(this.projectMap);
+
+        let { totalRecordCount, processRecordCount, successSaveCount } = await this.save2DB();
+        this.log(`${this.startAtMoment.format(this.DATE_FORMAT_DISPLAY) + ':00'}~${this.endAtMoment.format(this.DATE_FORMAT_DISPLAY) + ':59'}范围内日志录入完毕, 共记录数据${processRecordCount}/${totalRecordCount}条, 入库成功${successSaveCount}条`);
     }
 
     /**
-     * [必须覆盖]将数据同步到数据库中
+     * 解析制定时间范围内的日志记录， 并且录入到数据库中
+     * @param {*} startAt
+     * @param {*} endAt
+     * @memberof ParseBase
      */
-    async save2DB() {
-        this.mustBeOverride();
-        let processRecordCount = 0;
-        let successSaveCount = 0;
-        let totalRecordCount = this.getRecordCountInProjectMap();
-
-        // 处理的时候调一下这个方法, 专业打印处理进度
-        this.reportProcess(processRecordCount, successSaveCount, totalRecordCount);
-
-
-        return { totalRecordCount, processRecordCount, successSaveCount };
-    }
-
-    /**
-     * [必须覆盖]统计 projectUvMap 中的记录总数
-     */
-    getRecordCountInProjectMap() {
-        this.mustBeOverride();
-        let totalCount = 0;
-        // for (let [projectId, countAtMap] of projectMap) {
-        //   for (let [countAtTime, distribution] of countAtMap) {
-        //     totalCount = totalCount + 1
-        //   }
-        // }
-        return totalCount;
+    async parseLog(startAt, endAt) {
+        let that = this;
+        for (let currentAt = startAt; currentAt <= endAt; currentAt = currentAt + 60) { // 存储的时候每分钟一个文件， 所以跨度60秒；
+            let currentAtMoment = moment.unix(currentAt);
+            let absoluteLogUri = LKafka.getAbsoluteLogUriByType(currentAt, LKafka.LOG_TYPE_JSON);
+            if (fs.existsSync(absoluteLogUri) === false) {
+                // that.log(`log文件不存在, 自动跳过 => ${absoluteLogUri}`);
+                continue;
+            } else {
+                that.log(`开始处理${currentAtMoment.format(that.DATE_FORMAT_DISPLAY)}的记录, log文件地址 => ${absoluteLogUri}`);
+            }
+            // 确保按照文件顺序逐行读写日志
+            await new Promise(function (resolve, reject) {
+                let onDataReceive = async (data, next) => {
+                    let record = {};
+                    try {
+                        record = JSON.parse(data)
+                    } catch (error) {
+                        console.log('parse error===',error, data)
+                    }
+                    if (that.isLegalRecord(record)) {
+                        that.processRecordAndCacheInProjectMap(record);
+                    }
+                    next();
+                }
+                let onReadFinish = () => {
+                    resolve();
+                }
+                readLine(fs.createReadStream(absoluteLogUri), {
+                    // 换行符，默认\n
+                    newline: '\n',
+                    // 是否自动读取下一行，默认false
+                    autoNext: false,
+                    // 编码器，可以为函数或字符串（内置编码器：json，base64），默认null
+                    encoding: null
+                }).go(onDataReceive, onReadFinish);
+                // that.log('处理完毕');
+            })
+        }
     }
 
     /**
@@ -114,29 +136,63 @@ class ParseBase extends Base {
         return true
     }
 
-
-    mustBeOverride() {
-        this.warn('注意, 这里有个方法没有覆盖')
-        this.warn('当场退出←_←')
-        process.exit(0)
+    /**
+     * [必须覆盖]判断该条记录是不是需要解析的记录
+     * 
+     */
+    isLegalRecord(record) {
+        this.mustBeOverride('isLegalRecord');
+        return;
+    }
+    /**
+     * [必须覆盖]处理记录, 并将结果缓存在this.ProjectMap中
+     */
+    async processRecordAndCacheInProjectMap(record) {
+        this.mustBeOverride('processRecordAndCacheInProjectMap');
+        return false;
     }
 
     /**
-     * 汇报进度
-     * @param {*} processRecordCount
-     * @param {*} successSaveCount
-     * @param {*} totalRecordCount
+     * [必须覆盖]将数据同步到数据库中
      */
-    reportProcess(processRecordCount, successSaveCount, totalRecordCount, tableName = '') {
+    async save2DB() {
+        this.mustBeOverride('save2DB');
+        return false;
+    }
+
+    /**
+    * [必须覆盖]统计 projectMap 中的记录总数
+    */
+    getRecordCountInProjectMap() {
+        this.mustBeOverride('getRecordCountInProjectMap');
+        return 0;
+    }
+
+    /**
+    * 汇报进度,
+    * @param {*} processRecordCount 处理中的数据
+    * @param {*} successSaveCount 已经成功入库的数据
+    * @param {*} totalRecordCount 总数据
+    * @param {*} rate 汇报频率
+    */
+    reportProcess(processRecordCount, successSaveCount, totalRecordCount, tableName = '', rate = 100) {
         let insertTable = ''
         if (tableName) {
             insertTable = `, 入库${tableName}`
         }
-        if (processRecordCount % 100 === 0) {
+        if (processRecordCount % rate === 0) {
             this.log(`当前已处理${processRecordCount}/${totalRecordCount}条记录${insertTable}, 已成功${successSaveCount}条`)
         }
     }
-    
+
+    mustBeOverride(fnName = '') {
+        this.warn(`注意, 这里有个方法没有覆盖 ${fnName}`);
+        this.warn('当场退出←_←')
+        process.exit(0)
+    }
+
+
+
 }
 
 export default ParseBase;
